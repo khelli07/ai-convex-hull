@@ -1,5 +1,5 @@
 import numpy as np
-from tucil2.utils import *
+from myConvexHull.utils import *
 
 
 class KonvexHull:
@@ -11,14 +11,14 @@ class KonvexHull:
 
     def split_indices(self, indices, imin, imax):
         """
-        Inputs: indices, index of extreme points
+        Inputs: list of indices and index of extreme points
         Output: indices of above and below points
         """
         pmin, pmax = self.points[imin], self.points[imax]
         above = []
         below = []
 
-        slope, coeff = get_equation(pmin, pmax)
+        slope, coeff = get_line_equation(pmin, pmax)
 
         # If line is vertical, nothing is above or below
         if np.isnan(slope):
@@ -59,11 +59,11 @@ class KonvexHull:
 
         return idx
 
-    def my_convex_hull(self, splitted, imin, imax, above):
+    def quick_hull(self, splitted, imin, imax, is_above):
         """
-        Subfunction to fit.
-        This function is necessary
-        because we need to treat above and below points differently.
+        Helper method to fit method.
+        This method is necessary because of the different treatment
+        to group of above and below points.
         """
         length = len(splitted)
         # Base cases
@@ -81,12 +81,12 @@ class KonvexHull:
             above_1, below_1 = self.split_indices(splitted, imin, farthest_idx)
             above_2, below_2 = self.split_indices(splitted, farthest_idx, imax)
 
-            if above:
-                self.my_convex_hull(above_1, imin, farthest_idx, True)
-                self.my_convex_hull(above_2, farthest_idx, imax, True)
+            if is_above:
+                self.quick_hull(above_1, imin, farthest_idx, True)
+                self.quick_hull(above_2, farthest_idx, imax, True)
             else:
-                self.my_convex_hull(below_1, imin, farthest_idx, False)
-                self.my_convex_hull(below_2, farthest_idx, imax, False)
+                self.quick_hull(below_1, imin, farthest_idx, False)
+                self.quick_hull(below_2, farthest_idx, imax, False)
 
     def fit(self):
         """
@@ -98,5 +98,5 @@ class KonvexHull:
         self.remove(imax)
 
         above, below = self.split_indices(self.indices, imin, imax)
-        self.my_convex_hull(above, imin, imax, True)
-        self.my_convex_hull(below, imin, imax, False)
+        self.quick_hull(above, imin, imax, True)
+        self.quick_hull(below, imin, imax, False)

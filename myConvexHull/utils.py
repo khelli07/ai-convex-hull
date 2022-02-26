@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def get_equation(p1, p2):
+def get_line_equation(p1, p2):
     if p2[0] - p1[0] == 0:  # If slope is infinity
         return np.nan, np.nan
 
