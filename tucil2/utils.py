@@ -1,26 +1,19 @@
-def is_on_left(p1, p2, p3):
-    """
-    Returns true if p3 is located at the left or upper
-    the line build from p1 to p2.
-    """
-    if (p1[0] == p2[0]) and (p1[1] > p2[1]):  # Fix order
-        tmp = p1
-        p1 = p2
-        p2 = tmp
-
-    det = (
-        (p1[0] * p2[1])
-        + (p3[0] * p1[1])
-        + (p2[0] * p3[1])
-        - (p3[0] * p2[1])
-        - (p2[0] * p1[1])
-        - (p1[0] * p3[1])
-    )
-
-    return det > 0
+import numpy as np
 
 
-def norm(p3, p):
+def get_equation(p1, p2):
+    if p2[0] - p1[0] == 0:  # If slope is infinity
+        return np.nan, np.nan
+
+    # Get slope
+    slope = (p2[1] - p1[1]) / (p2[0] - p1[0])
+    # Search coeff from either of the point
+    coeff = p1[1] - slope * p1[0]
+
+    return slope, coeff
+
+
+def norm_(p3, p):
     """
     Returns the norm of vector OA.
     Here, A = p1 and O = p3. Hence, building vector O -> A.
@@ -35,7 +28,7 @@ def compute_cosine(p1, p2, p3):
     between vector OA and OB.
     """
     dot = (p1[0] - p3[0]) * (p2[0] - p3[0]) + (p1[1] - p3[1]) * (p2[1] - p3[1])
-    norms = norm(p3, p1) * norm(p3, p2)
+    norms = norm_(p3, p1) * norm_(p3, p2)
 
     if norms == 0:
         return 0.0
@@ -51,5 +44,9 @@ def point_to_line(p1, p2, p3):
     a = p1[1] - p2[1]
     b = p2[0] - p1[0]
     c = p1[0] * p2[1] - p2[0] * p1[1]
+    denominator = (a * a + b * b) ** (0.5)
 
-    return abs(a * p3[0] + b * p3[1] + c) / (a * a + b * b) ** (0.5)
+    if denominator == 0:
+        return 0
+
+    return abs(a * p3[0] + b * p3[1] + c) / denominator

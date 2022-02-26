@@ -11,20 +11,28 @@ class KonvexHull:
 
     def split_indices(self, indices, imin, imax):
         """
-        Inputs: all indices and index of extreme points
-        Output: indices of left and right points
+        Inputs: indices, index of extreme points
+        Output: indices of above and below points
         """
         pmin, pmax = self.points[imin], self.points[imax]
-        left = []
-        right = []
+        above = []
+        below = []
+
+        slope, coeff = get_equation(pmin, pmax)
+
+        # If line is vertical, nothing is above or below
+        if np.isnan(slope):
+            return above, below
 
         for i in indices:
-            if is_on_left(pmin, pmax, self.points[i]):
-                left.append(i)
-            else:
-                right.append(i)
+            x, y = self.points[i]
+            y_line = slope * x + coeff
+            if y > y_line:
+                above.append(i)
+            elif y < y_line:
+                below.append(i)
 
-        return left, right
+        return above, below
 
     def remove(self, idx):
         """
@@ -36,8 +44,8 @@ class KonvexHull:
         """
         Returns the farthest points to the line from p1 and p2.
         """
-        idx = 0
-        max_distance = 0
+        idx = indices[0]
+        max_distance = -1
 
         for i in indices:
             dist = point_to_line(p1, p2, self.points[i])
@@ -51,20 +59,16 @@ class KonvexHull:
 
         return idx
 
-    def sub_convex_hull(self, splitted, imin, imax, left):
+    def my_convex_hull(self, splitted, imin, imax, above):
         """
-        Subfunction to my_convex_hull.
+        Subfunction to fit.
         This function is necessary
-        because we need to treat left and right points differently.
+        because we need to treat above and below points differently.
         """
         length = len(splitted)
         # Base cases
         if length == 0:
             self.simplices.append([imin, imax])
-        elif length == 1:
-            self.simplices.append([imin, splitted[0]])
-            self.simplices.append([splitted[0], imax])
-            self.remove(splitted[0])
 
         # Recurrence
         else:
@@ -74,17 +78,17 @@ class KonvexHull:
             splitted.remove(farthest_idx)
             self.remove(farthest_idx)
 
-            left_1, right_1 = self.split_indices(splitted, imin, farthest_idx)
-            left_2, right_2 = self.split_indices(splitted, farthest_idx, imax)
+            above_1, below_1 = self.split_indices(splitted, imin, farthest_idx)
+            above_2, below_2 = self.split_indices(splitted, farthest_idx, imax)
 
-            if left:
-                self.sub_convex_hull(left_1, imin, farthest_idx, True)
-                self.sub_convex_hull(left_2, farthest_idx, imax, True)
+            if above:
+                self.my_convex_hull(above_1, imin, farthest_idx, True)
+                self.my_convex_hull(above_2, farthest_idx, imax, True)
             else:
-                self.sub_convex_hull(right_1, imin, farthest_idx, False)
-                self.sub_convex_hull(right_2, farthest_idx, imax, False)
+                self.my_convex_hull(below_1, imin, farthest_idx, False)
+                self.my_convex_hull(below_2, farthest_idx, imax, False)
 
-    def my_convex_hull(self):
+    def fit(self):
         """
         Search for points in the convex hull.
         The output are restored in self.simplices.
@@ -93,6 +97,6 @@ class KonvexHull:
         self.remove(imin)
         self.remove(imax)
 
-        left, right = self.split_indices(self.indices, imin, imax)
-        self.sub_convex_hull(left, imin, imax, True)
-        self.sub_convex_hull(right, imin, imax, False)
+        above, below = self.split_indices(self.indices, imin, imax)
+        self.my_convex_hull(above, imin, imax, True)
+        self.my_convex_hull(below, imin, imax, False)
