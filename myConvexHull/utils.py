@@ -3,7 +3,7 @@ import numpy as np
 
 def get_line_equation(p1, p2):
     if p2[0] - p1[0] == 0:  # If slope is infinity
-        return np.nan, np.nan
+        return np.nan, None
 
     # Get slope
     slope = (p2[1] - p1[1]) / (p2[0] - p1[0])
